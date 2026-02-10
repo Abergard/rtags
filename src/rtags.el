@@ -5,7 +5,7 @@
 ;; Author: Jan Erik Hanssen <jhanssen@gmail.com>
 ;;         Anders Bakken <agbakken@gmail.com>
 ;; Package-Requires: ((emacs "24.3"))
-;; Version: 2.41.133
+;; Version: 2.44.135
 
 ;; URL: https://github.com/Andersbakken/rtags
 ;; This file is not part of GNU Emacs.
@@ -66,7 +66,7 @@
 ;; Constants
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst rtags-protocol-version 128)
-(defconst rtags-package-version "2.41")
+(defconst rtags-package-version "2.44")
 (defconst rtags-popup-available (require 'popup nil t))
 (defconst rtags-supported-major-modes '(c-mode c++-mode objc-mode) "Major modes RTags supports.")
 (defconst rtags-verbose-results-delimiter "------------------------------------------")
@@ -1312,8 +1312,8 @@ to only call this when `rtags-socket-address' is defined.
           (when path-filter-regex
             (push "-Z" arguments)))
         (when (and unsaved (rtags-buffer-file-name unsaved))
-          (setq tempfile (make-temp-file "/tmp/"))
-          (push (format "--unsaved-file=%s:%s" (rtags-untrampify (rtags-buffer-file-name unsaved)) tempfile) arguments)
+          (setq tempfile (make-nearby-temp-file "rtags"))
+          (push (format "--unsaved-file=%s:%s" (rtags-untrampify (rtags-buffer-file-name unsaved)) (rtags-untrampify tempfile)) arguments)
           (with-current-buffer unsaved
             (save-restriction
               (widen)
