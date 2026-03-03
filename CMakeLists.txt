@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8.2)
 project(rtags)
 set(RTAGS_VERSION_MAJOR 2)
-set(RTAGS_VERSION_MINOR 41)
+set(RTAGS_VERSION_MINOR 44)
 set(RTAGS_VERSION_DATABASE 135)
 set(RTAGS_VERSION_SOURCES_FILE 16)
 set(RTAGS_VERSION ${RTAGS_VERSION_MAJOR}.${RTAGS_VERSION_MINOR}.${RTAGS_VERSION_DATABASE})
@@ -38,12 +38,16 @@ if (RTAGS_ENABLE_DEV_OPTIONS)
         "\\\\.travis.yml$"
         "\\\\.github/"
         "^${PROJECT_SOURCE_DIR}/.dir-locals.el"
-        "^${PROJECT_SOURCE_DIR}/build/"
+        "^${PROJECT_SOURCE_DIR}/build"
+        "/node_modules/"
+        "/_CPack_Packages/"
+        "/\\\\.rtags/"
         )
 
     include(CPack)
 else ()
     set(WITH_TESTS 0 CACHE BOOL "Build testing files; requires cppunit.")
+    set(WITH_MANUAL_TESTS 0 CACHE BOOL "Build manual test programs.")
 
     set(RCT_WITH_TESTS ${WITH_TESTS})
 
@@ -115,6 +119,10 @@ else ()
         else()
             message(WARNING "No suitable Emacs version found! Skipping elisp tests.")
         endif ()
+    endif ()
+
+    if (WITH_MANUAL_TESTS)
+        add_subdirectory(tests/manual)
     endif ()
 
     feature_summary(INCLUDE_QUIET_PACKAGES WHAT ALL)
