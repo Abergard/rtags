@@ -5,7 +5,7 @@
 ;; Author: Jan Erik Hanssen <jhanssen@gmail.com>
 ;;         Anders Bakken <agbakken@gmail.com>
 ;; Package-Requires: ((emacs "24.3"))
-;; Version: 2.41.133
+;; Version: 2.45.136
 
 ;; URL: https://github.com/Andersbakken/rtags
 ;; This file is not part of GNU Emacs.
@@ -66,7 +66,7 @@
 ;; Constants
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst rtags-protocol-version 128)
-(defconst rtags-package-version "2.41")
+(defconst rtags-package-version "2.45")
 (defconst rtags-popup-available (require 'popup nil t))
 (defconst rtags-supported-major-modes '(c-mode c++-mode objc-mode) "Major modes RTags supports.")
 (defconst rtags-verbose-results-delimiter "------------------------------------------")
@@ -124,6 +124,12 @@
 
 (defcustom rtags-enabled t
   "Whether RTags is enabled.  We try to do nothing when it's not."
+  :type 'boolean
+  :safe 'booleanp)
+
+(defcustom rtags-mouse-enabled nil
+  "Set to t if you want clicking on links in the various rtags buffers
+ to jump to the location."
   :type 'boolean
   :safe 'booleanp)
 
@@ -844,8 +850,9 @@ to case differences."
 (setq rtags-mode-map (make-sparse-keymap))
 (define-key rtags-mode-map (kbd "RET") 'rtags-select-other-window)
 (define-key rtags-mode-map (kbd "M-RET") 'rtags-select)
-(define-key rtags-mode-map [mouse-1] 'rtags-select-other-window)
-(define-key rtags-mode-map [mouse-2] 'rtags-select-other-window)
+(when rtags-mouse-enabled
+  (define-key rtags-mode-map [mouse-1] 'rtags-select-other-window)
+  (define-key rtags-mode-map [mouse-2] 'rtags-select-other-window))
 (define-key rtags-mode-map (kbd "M-o") 'rtags-show-in-other-window)
 (define-key rtags-mode-map (kbd "c") 'rtags-select-caller)
 (define-key rtags-mode-map (kbd "M-c") 'rtags-select-caller-other-window)
@@ -870,8 +877,9 @@ to case differences."
 (define-key rtags-dependency-tree-mode-map (kbd "p") 'rtags-dependency-tree-previous-level)
 (define-key rtags-dependency-tree-mode-map (kbd "RET") 'rtags-select-other-window)
 (define-key rtags-dependency-tree-mode-map (kbd "M-RET") 'rtags-select)
-(define-key rtags-dependency-tree-mode-map [mouse-1] 'rtags-select-other-window)
-(define-key rtags-dependency-tree-mode-map [mouse-2] 'rtags-select-other-window)
+(when rtags-mouse-enabled
+  (define-key rtags-dependency-tree-mode-map [mouse-1] 'rtags-select-other-window)
+  (define-key rtags-dependency-tree-mode-map [mouse-2] 'rtags-select-other-window))
 (define-key rtags-dependency-tree-mode-map (kbd "M-o") 'rtags-show-in-other-window)
 (define-key rtags-dependency-tree-mode-map (kbd "s") 'rtags-show-in-other-window)
 (define-key rtags-dependency-tree-mode-map (kbd "SPC") 'rtags-select-and-remove-rtags-buffer)
@@ -890,8 +898,9 @@ to case differences."
 (define-key rtags-references-tree-mode-map (kbd "p") 'rtags-references-tree-previous-level)
 (define-key rtags-references-tree-mode-map (kbd "RET") 'rtags-select-other-window)
 (define-key rtags-references-tree-mode-map (kbd "M-RET") 'rtags-select)
-(define-key rtags-references-tree-mode-map [mouse-1] 'rtags-select-other-window)
-(define-key rtags-references-tree-mode-map [mouse-2] 'rtags-select-other-window)
+(when rtags-mouse-enabled
+  (define-key rtags-references-tree-mode-map [mouse-1] 'rtags-select-other-window)
+  (define-key rtags-references-tree-mode-map [mouse-2] 'rtags-select-other-window))
 (define-key rtags-references-tree-mode-map (kbd "M-o") 'rtags-show-in-other-window)
 (define-key rtags-references-tree-mode-map (kbd "s") 'rtags-show-in-other-window)
 (define-key rtags-references-tree-mode-map (kbd "SPC") 'rtags-select-and-remove-rtags-buffer)
@@ -903,8 +912,9 @@ to case differences."
 (setq rtags-location-stack-visualize-mode-map (make-sparse-keymap))
 (define-key rtags-location-stack-visualize-mode-map (kbd "RET") 'rtags-select-other-window)
 (define-key rtags-location-stack-visualize-mode-map (kbd "M-RET") 'rtags-select)
-(define-key rtags-location-stack-visualize-mode-map [mouse-1] 'rtags-select-other-window)
-(define-key rtags-location-stack-visualize-mode-map [mouse-2] 'rtags-select-other-window)
+(when rtags-mouse-enabled
+  (define-key rtags-location-stack-visualize-mode-map [mouse-1] 'rtags-select-other-window)
+  (define-key rtags-location-stack-visualize-mode-map [mouse-2] 'rtags-select-other-window))
 (define-key rtags-location-stack-visualize-mode-map (kbd "M-o") 'rtags-show-in-other-window)
 (define-key rtags-location-stack-visualize-mode-map (kbd "s") 'rtags-show-in-other-window)
 (define-key rtags-location-stack-visualize-mode-map (kbd "SPC") 'rtags-select-and-remove-rtags-buffer)
@@ -1312,8 +1322,8 @@ to only call this when `rtags-socket-address' is defined.
           (when path-filter-regex
             (push "-Z" arguments)))
         (when (and unsaved (rtags-buffer-file-name unsaved))
-          (setq tempfile (make-temp-file "/tmp/"))
-          (push (format "--unsaved-file=%s:%s" (rtags-untrampify (rtags-buffer-file-name unsaved)) tempfile) arguments)
+          (setq tempfile (make-nearby-temp-file "rtags"))
+          (push (format "--unsaved-file=%s:%s" (rtags-untrampify (rtags-buffer-file-name unsaved)) (rtags-untrampify tempfile)) arguments)
           (with-current-buffer unsaved
             (save-restriction
               (widen)
@@ -3029,16 +3039,22 @@ of the form (filename line column)."
         (unless (y-or-n-p (format "RTags: Confirm %d renames? " (length replacements)))
           (setq replacements nil))
         (kill-buffer (current-buffer)))
-      (dolist (value replacements)
-        (with-current-buffer (car value)
-          (when (run-hook-with-args-until-failure 'rtags-edit-hook)
-            (cl-incf modifications)
-            (goto-char (cdr value))
-            ;; (message "about to insert at %s" (rtags-current-location))
-            (delete-char (or len (length (rtags-current-token t))))
-            (insert replacewith)
-            (basic-save-buffer))))
-      (message (format "Opened %d new files and made %d modifications" filesopened modifications)))))
+      (let ((filesmodified))
+        (dolist (value replacements)
+          (with-current-buffer (car value)
+            (when (run-hook-with-args-until-failure 'rtags-edit-hook)
+              (cl-incf modifications)
+              (goto-char (cdr value))
+              ;; (message "about to insert at %s" (rtags-current-location))
+              (delete-char (or len (length (rtags-current-token t))))
+              (insert replacewith)
+              (cl-pushnew (current-buffer) filesmodified))))
+
+        (dolist (buf filesmodified)
+          (with-current-buffer buf
+            (basic-save-buffer)))
+
+        (message (format "Opened %d new files and made %d modifications in %d files" filesopened modifications (length filesmodified)))))))
 
 ;;;###autoload
 (defun rtags-rename-symbol (&optional no-confirm)
@@ -3157,11 +3173,14 @@ can be specified with a prefix argument."
 (defun rtags--mode-line-diag-string ()
   (and rtags--diagnostics-count
        (> rtags--diagnostics-count 0)
-       (propertize (format "%d diag%s" rtags--diagnostics-count
-                           (if (> rtags--diagnostics-count 1) "s" ""))
-                   'face 'rtags-errline
-                   'mouse-face 'mode-line-highlight
-                   'local-map (make-mode-line-mouse-map 'mouse-1 'rtags-diagnostics))))
+       (let ((str (format "%d diag%s" rtags--diagnostics-count
+                          (if (> rtags--diagnostics-count 1) "s" ""))))
+         (if rtags-mouse-enabled
+             (propertize str
+                         'face 'rtags-errline
+                         'mouse-face 'mode-line-highlight
+                         'local-map (make-mode-line-mouse-map 'mouse-1 'rtags-diagnostics))
+           (propertize str 'face 'rtags-errline)))))
 
 (defun rtags-mode-line ()
   "Return the RTags diagnostics (warning, error, fixit) count to
